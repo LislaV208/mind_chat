@@ -1,0 +1,36 @@
+Cel aplikacji
+Aplikacja to AI-powered learning chatbot, który umożliwia użytkownikowi naukę dowolnych tematów poprzez rozmowę z chatbotem. Jednak zamiast jedynie prowadzić rozmowy, aplikacja ma także tworzyć dynamiczną mapę wiedzy użytkownika na podstawie przeprowadzonych rozmów.
+
+Główne funkcjonalności
+Ekran rozmowy (Chat Interface)
+
+To główny ekran aplikacji, gdzie użytkownik zadaje pytania i otrzymuje odpowiedzi od AI.
+Interfejs powinien być czysty, przejrzysty i responsywny.
+Wiadomości powinny być wyświetlane w formie dymków czatu, z naprzemiennym formatowaniem dla użytkownika i AI.
+Pole wprowadzania tekstu powinno obsługiwać Markdown, umożliwiając czytelniejsze formatowanie odpowiedzi.
+Mapa Wiedzy (Knowledge Mapping)
+
+System śledzi kluczowe tematy omawiane przez użytkownika i buduje z nich mapę wiedzy.
+Pierwsza wersja: lista słów kluczowych w pasku bocznym, aktualizowana na podstawie rozmów.
+Rozszerzona wersja: interaktywna mapa powiązań tematów, przypominająca mind map.
+Motyw Jasny/Ciemny
+
+Domyślnie ciemny motyw.
+Możliwość przełączania na jasny.
+Integracja z systemem motywów SkeletonUI.
+Minimalistyczny & Estetyczny Design
+
+Interfejs inspirowany SkeletonUI.
+Dbałość o typografię, czytelność i przestrzeń.
+Przyjazny UX – responsywny, łatwy w obsłudze.
+Responsywność
+
+Aplikacja ma działać zarówno na desktopie, jak i na mobile.
+Layout czatu powinien być mobilny, z łatwo dostępnym polem wprowadzania tekstu.
+Technologia
+Frontend: SvelteKit + SkeletonUI + TailwindCSS (opcjonalnie) + TypeScript.
+Backend (tymczasowo mockowany): API do obsługi czatu (np. OpenAI API lub lokalna symulacja).
+Zarządzanie stanem: Svelte stores do przechowywania wiadomości, motywu oraz mapy wiedzy.
+Routing:
+/chat – Główny ekran rozmowy
+/knowledge-map – Ekran wizualizacji zdobytej wiedzy
