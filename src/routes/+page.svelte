@@ -1,15 +1,17 @@
 <!-- YOU CAN DELETE EVERYTHING IN THIS PAGE -->
 
-<div class="container h-full mx-auto flex justify-center items-center">
-	<div class="space-y-5">
-		<h1 class="h1">Let's get cracking bones!</h1>
-		<p>Start by exploring:</p>
-		<ul>
-			<li><code class="code">/src/routes/+layout.svelte</code> - barebones layout</li>
-			<li><code class="code">/src/app.postcss</code> - app wide css</li>
-			<li>
-				<code class="code">/src/routes/+page.svelte</code> - this page, you can replace the contents
-			</li>
-		</ul>
+<script lang="ts">
+	import { goto } from '$app/navigation';
+</script>
+
+<div class="min-h-screen container mx-auto flex justify-center items-center">
+	<div class="card p-8 space-y-6 text-center">
+		<h1 class="h1">Mind Map Chat</h1>
+		<p class="text-lg">
+			Witaj w Mind Map Chat! Rozpocznij rozmowę z AI i twórz własną mapę wiedzy podczas nauki.
+		</p>
+		<button class="btn variant-filled-primary" on:click={() => goto('/chat')}>
+			Rozpocznij rozmowę
+		</button>
 	</div>
 </div>
