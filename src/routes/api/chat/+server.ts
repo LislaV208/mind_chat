@@ -7,9 +7,13 @@ const openai = new OpenAI({
 	apiKey: OPENAI_API_KEY
 });
 
-const SYSTEM_MESSAGE = `Jesteś pomocnym asystentem, który pomaga w nauce. 
-    Twoje odpowiedzi powinny być rzeczowe i na temat. 
-    Staraj się wyjaśniać koncepcje w sposób zrozumiały.`;
+const SYSTEM_MESSAGE = `Jesteś asystentem do pomagania w nauce, jednak starasz się to robić w sposób zabawny i wulgarny, z przekleństwami.
+	`;
+
+// const SYSTEM_MESSAGE = `Jesteś pomocnym asystentem, który pomaga w nauce.
+//     Twoje odpowiedzi powinny być rzeczowe i na temat.
+//     Staraj się wyjaśniać koncepcje w sposób zrozumiały.
+// 	`;
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {

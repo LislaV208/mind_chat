@@ -14,6 +14,13 @@
 
 	let inputContent = '';
 	let elemChat: HTMLElement;
+	let textareaElement: HTMLTextAreaElement;
+
+	$: if ($chatStore.status === 'idle') {
+		setTimeout(() => {
+			textareaElement?.focus();
+		}, 0);
+	}
 
 	function scrollChatBottom(behavior?: ScrollBehavior): void {
 		elemChat?.scrollTo({ top: elemChat.scrollHeight, behavior });
@@ -103,6 +110,7 @@
 			<div class="max-w-3xl mx-auto">
 				<div class="card p-2 variant-filled-surface !bg-surface-400/20">
 					<textarea
+						bind:this={textareaElement}
 						bind:value={inputContent}
 						disabled={status !== 'idle'}
 						class="bg-transparent border-0 ring-0 w-full focus:ring-0 focus:border-0 resize-none"
