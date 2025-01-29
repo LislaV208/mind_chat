@@ -10,19 +10,9 @@ export class ChatState {
 }
 
 export class ChatStore {
-	private store = writable<ChatState>(
-		new ChatState(
-			[
-				{
-					id: 0,
-					role: 'assistant',
-					content: 'Cześć! W czym mogę Ci dzisiaj pomóc?',
-					timestamp: new Date()
-				}
-			],
-			'idle'
-		)
-	);
+	private readonly MAX_MESSAGES = 10;
+
+	private store = writable<ChatState>(new ChatState([], 'idle'));
 
 	subscribe(run: (value: ChatState) => void) {
 		return this.store.subscribe(run);
@@ -41,14 +31,20 @@ export class ChatStore {
 		this.store.update((state) => new ChatState([...state.messages, message], 'loading'));
 
 		try {
-			// Wywołaj endpoint API tylko z ostatnią wiadomością użytkownika
+			// Pobierz aktualny stan po dodaniu wiadomości użytkownika
+			state = get(this.store);
+
+			// Pobierz ostatnie wiadomości do wysłania
+			const recentMessages = state.messages.slice(-this.MAX_MESSAGES);
+
+			// Wywołaj endpoint API z ostatnimi wiadomościami
 			const response = await fetch('/api/chat', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					messages: [{ role: 'user', content: content }]
+					messages: recentMessages.map(({ role, content }) => ({ role, content }))
 				})
 			});
 
@@ -57,7 +53,7 @@ export class ChatStore {
 			}
 
 			const data = await response.json();
-			
+
 			if (data.error) {
 				throw new Error(data.error);
 			}

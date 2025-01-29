@@ -2,6 +2,7 @@
 	import { Avatar, ProgressRadial } from '@skeletonlabs/skeleton';
 	import { format } from 'date-fns';
 	import { pl } from 'date-fns/locale';
+	import { marked } from 'marked';
 
 	import { chatStore } from '$lib/chat/store';
 	import type { Message } from '$lib/chat/types/message';
@@ -34,6 +35,13 @@
 			event.preventDefault();
 			addMessage();
 		}
+	}
+
+	function formatMessage(content: string, role: 'user' | 'assistant'): string {
+		if (role === 'assistant') {
+			return marked.parse(content, { async: false }) as string;
+		}
+		return content;
 	}
 </script>
 
@@ -76,7 +84,7 @@
 					{:else}
 						<div class="grid grid-cols-[auto_1fr] gap-2">
 							<div class="card p-4 rounded-xl space-y-2 variant-soft">
-								<p>{message.content}</p>
+								{@html formatMessage(message.content, message.role)}
 							</div>
 						</div>
 					{/if}
@@ -99,8 +107,8 @@
 					name="prompt"
 					id="prompt"
 					placeholder="Write a message..."
-					rows="3"
 					on:keydown={onPromptKeydown}
+					rows="3"
 				/>
 			</div>
 		</div>
