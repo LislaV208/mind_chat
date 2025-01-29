@@ -47,13 +47,31 @@
 
 <div class="h-screen grid grid-cols-1 lg:grid-cols-[600px_1fr] bg-surface-400/20">
 	<!-- Navigation -->
-	<div class="hidden lg:grid grid-rows-[auto_1fr] border-r border-surface-400/40"></div>
+	<div class="hidden lg:grid grid-rows-[1fr] border-r border-surface-400/40">
+		<div class="flex items-center justify-center text-surface-400">
+			<span>Tu niebawem pojawią się rzeczy!</span>
+		</div>
+	</div>
 	<!-- Chat -->
 	<div class="h-full flex flex-col flex-1 min-h-0 w-[1000px] mx-auto">
 		<!-- Message feed -->
 		<div class="flex-1 overflow-y-auto p-4" bind:this={elemChat}>
 			<!-- Placeholder for scrolling -->
-			<section class="w-full p-4 space-y-4">
+			<section class="w-full p-4 space-y-4" class:h-full={messages.length === 0}>
+				{#if messages.length === 0}
+					<div
+						class="flex flex-col items-center justify-center text-center space-y-4"
+						class:h-full={messages.length === 0}
+					>
+						<h2 class="h2">Witaj w Mind Chat! 👋</h2>
+						<p class="text-surface-300">
+							Zadaj mi dowolne pytanie, a pomogę Ci się uczyć i zrozumieć nowe tematy.
+						</p>
+						<p class="text-surface-300">
+							W trakcie naszej rozmowy będę budować mapę Twojej wiedzy.
+						</p>
+					</div>
+				{/if}
 				{#each messages as message, i}
 					{#if message.role === 'user'}
 						<!-- User message -->
@@ -90,7 +108,7 @@
 						class="bg-transparent border-0 ring-0 w-full focus:ring-0 focus:border-0 resize-none"
 						name="prompt"
 						id="prompt"
-						placeholder="Write a message..."
+						placeholder="Zadaj pytanie..."
 						on:keydown={onPromptKeydown}
 						rows="1"
 					/>
