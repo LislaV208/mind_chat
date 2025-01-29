@@ -15,9 +15,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const { messages } = await request.json();
 
-		console.log(messages);
-
-		const response = await openai.chat.completions.create({
+		const stream = await openai.chat.completions.create({
 			model: 'gpt-4o-mini',
 			messages: [
 				{ role: 'system', content: SYSTEM_MESSAGE },
@@ -27,13 +25,30 @@ export const POST: RequestHandler = async ({ request }) => {
 				}))
 			],
 			temperature: 0.7,
-			max_tokens: 1000
+			max_tokens: 1000,
+			stream: true
 		});
 
-		return json({
-			message:
-				response.choices[0]?.message?.content ||
-				'Przepraszam, nie udało mi się wygenerować odpowiedzi.'
+		// Tworzymy nowy ReadableStream
+		const textStream = new ReadableStream({
+			async start(controller) {
+				for await (const chunk of stream) {
+					const content = chunk.choices[0]?.delta?.content;
+					if (content) {
+						controller.enqueue(content);
+					}
+				}
+				controller.close();
+			}
+		});
+
+		// Zwracamy strumień jako odpowiedź
+		return new Response(textStream, {
+			headers: {
+				'Content-Type': 'text/event-stream',
+				'Cache-Control': 'no-cache',
+				Connection: 'keep-alive'
+			}
 		});
 	} catch (error) {
 		console.error('OpenAI API error:', error);

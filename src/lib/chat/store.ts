@@ -52,22 +52,45 @@ export class ChatStore {
 				throw new Error('Błąd podczas komunikacji z serwerem');
 			}
 
-			const data = await response.json();
-
-			if (data.error) {
-				throw new Error(data.error);
+			if (!response.body) {
+				throw new Error('Brak odpowiedzi z serwera');
 			}
 
+			// Przygotuj wiadomość asystenta
 			state = get(this.store);
 			message = {
 				id: state.messages.length + 1,
 				role: 'assistant',
-				content: data.message,
+				content: '',
 				timestamp: new Date()
 			};
 
-			// Dodaj odpowiedź asystenta
-			this.store.update((state) => new ChatState([...state.messages, message], 'idle'));
+			// Dodaj pustą wiadomość asystenta
+			this.store.update((state) => new ChatState([...state.messages, message], 'loading'));
+
+			// Czytaj strumień odpowiedzi
+			const reader = response.body.getReader();
+			const decoder = new TextDecoder();
+
+			while (true) {
+				const { done, value } = await reader.read();
+				if (done) break;
+
+				const text = decoder.decode(value);
+				
+				// Aktualizuj ostatnią wiadomość o nowy fragment tekstu
+				this.store.update((state) => {
+					const messages = [...state.messages];
+					const lastMessage = messages[messages.length - 1];
+					if (lastMessage && lastMessage.role === 'assistant') {
+						lastMessage.content += text;
+					}
+					return new ChatState(messages, 'loading');
+				});
+			}
+
+			// Zakończ ładowanie
+			this.store.update((state) => new ChatState(state.messages, 'idle'));
 		} catch (error) {
 			const errorMessage = error instanceof Error ? error.message : 'Wystąpił nieznany błąd';
 			this.store.update((state) => new ChatState([...state.messages], 'idle', errorMessage));
