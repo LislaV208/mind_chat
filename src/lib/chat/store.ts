@@ -12,7 +12,14 @@ export class ChatState {
 export class ChatStore {
 	private store = writable<ChatState>(
 		new ChatState(
-			[{ id: 0, role: 'assistant', content: 'Hello, how can I help you?', timestamp: new Date() }],
+			[
+				{
+					id: 0,
+					role: 'assistant',
+					content: 'Cześć! W czym mogę Ci dzisiaj pomóc?',
+					timestamp: new Date()
+				}
+			],
 			'idle'
 		)
 	);
@@ -30,25 +37,45 @@ export class ChatStore {
 			timestamp: new Date()
 		};
 
+		// Dodaj wiadomość użytkownika i ustaw status na loading
 		this.store.update((state) => new ChatState([...state.messages, message], 'loading'));
-		let error: string | undefined = undefined;
 
 		try {
-			await new Promise((resolve) => setTimeout(resolve, 1000));
+			// Wywołaj endpoint API tylko z ostatnią wiadomością użytkownika
+			const response = await fetch('/api/chat', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					messages: [{ role: 'user', content: content }]
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Błąd podczas komunikacji z serwerem');
+			}
+
+			const data = await response.json();
+			
+			if (data.error) {
+				throw new Error(data.error);
+			}
 
 			state = get(this.store);
 			message = {
 				id: state.messages.length + 1,
 				role: 'assistant',
-				content: 'Hello, how can I help you today?',
+				content: data.message,
 				timestamp: new Date()
 			};
 
-			this.store.update((state) => new ChatState([...state.messages, message], 'idle', error));
-		} catch {
-			error = 'An error occurred';
+			// Dodaj odpowiedź asystenta
+			this.store.update((state) => new ChatState([...state.messages, message], 'idle'));
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : 'Wystąpił nieznany błąd';
+			this.store.update((state) => new ChatState([...state.messages], 'idle', errorMessage));
 		}
-		this.store.update((state) => new ChatState([...state.messages], 'idle', error));
 	}
 }
 
