@@ -3,8 +3,9 @@ import type { Config } from 'tailwindcss';
 import forms from '@tailwindcss/forms';
 import typography from '@tailwindcss/typography';
 import { skeleton } from '@skeletonlabs/tw-plugin';
+import { appTheme } from './app-theme';
 
-export default {
+const config = {
 	darkMode: 'class',
 	content: [
 		'./src/**/*.{html,js,svelte,ts}',
@@ -18,13 +19,10 @@ export default {
 		typography,
 		skeleton({
 			themes: {
-				preset: [
-					{
-						name: 'rocket',
-						enhancements: true
-					}
-				]
+				custom: [appTheme]
 			}
 		})
 	]
 } satisfies Config;
+
+export default config;
