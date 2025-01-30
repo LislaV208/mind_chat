@@ -12,7 +12,28 @@ const config = {
 		join(require.resolve('@skeletonlabs/skeleton'), '../**/*.{html,js,svelte,ts}')
 	],
 	theme: {
-		extend: {}
+		extend: {
+			fontSize: {
+				// Bazowe rozmiary czcionek
+				'base': ['16px', '24px'],
+				'lg': ['18px', '28px'],
+				'xl': ['20px', '30px'],
+				'2xl': ['24px', '32px'],
+				'3xl': ['30px', '36px']
+			},
+			typography: {
+				DEFAULT: {
+					css: {
+						fontSize: '16px',
+						lineHeight: '24px',
+						'@screen sm': {
+							fontSize: '18px',
+							lineHeight: '28px'
+						}
+					}
+				}
+			}
+		}
 	},
 	plugins: [
 		forms,

@@ -103,7 +103,7 @@
 	<!-- Chat -->
 	<div class="h-full flex flex-col flex-1 min-h-0 relative">
 		<div
-			class="w-full max-w-[95%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-[1000px] mx-auto h-full flex flex-col"
+			class="w-full max-w-[95%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-3xl mx-auto h-full flex flex-col"
 		>
 			<!-- Message feed -->
 			<div class="flex-1 overflow-y-auto px-2 sm:px-4 md:px-6" bind:this={elemChat}>
