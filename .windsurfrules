@@ -1,36 +1,81 @@
-Cel aplikacji
-Aplikacja to AI-powered learning chatbot, który umożliwia użytkownikowi naukę dowolnych tematów poprzez rozmowę z chatbotem. Jednak zamiast jedynie prowadzić rozmowy, aplikacja ma także tworzyć dynamiczną mapę wiedzy użytkownika na podstawie przeprowadzonych rozmów.
+## Workflow Developera
 
-Główne funkcjonalności
-Ekran rozmowy (Chat Interface)
+0. zacznij od przeanalizowania pliku ARCHITECTURE.md
 
-To główny ekran aplikacji, gdzie użytkownik zadaje pytania i otrzymuje odpowiedzi od AI.
-Interfejs powinien być czysty, przejrzysty i responsywny.
-Wiadomości powinny być wyświetlane w formie dymków czatu, z naprzemiennym formatowaniem dla użytkownika i AI.
-Pole wprowadzania tekstu powinno obsługiwać Markdown, umożliwiając czytelniejsze formatowanie odpowiedzi.
-Mapa Wiedzy (Knowledge Mapping)
+### 1. Dodawanie Nowej Funkcjonalności
+1. Zacznij od zrozumienia wymagań biznesowych
+2. Zidentyfikuj, czy to nowy feature czy rozszerzenie istniejącego
+3. Stwórz branch z prefixem odpowiadającym typowi zmian:
+   - `feature/` - nowa funkcjonalność
+   - `fix/` - poprawka błędu
+   - `refactor/` - refaktoryzacja kodu
+   - `docs/` - zmiany w dokumentacji
 
-System śledzi kluczowe tematy omawiane przez użytkownika i buduje z nich mapę wiedzy.
-Pierwsza wersja: lista słów kluczowych w pasku bocznym, aktualizowana na podstawie rozmów.
-Rozszerzona wersja: interaktywna mapa powiązań tematów, przypominająca mind map.
-Motyw Jasny/Ciemny
+### 2. Struktura Zmian
+1. Zacznij od modeli domenowych (`domain/models/`)
+2. Zaimplementuj logikę biznesową w serwisach (`domain/services/`)
+3. Dodaj warstwę API jeśli potrzebna (`api/`)
+4. Stwórz lub zaktualizuj store (`store/`)
+5. Na końcu dodaj komponenty UI (`ui/`)
 
-Domyślnie ciemny motyw.
-Możliwość przełączania na jasny.
-Integracja z systemem motywów SkeletonUI.
-Minimalistyczny & Estetyczny Design
+### 3. Zasady Pracy
+1. **Małe commity**
+   - Każdy commit powinien zawierać jedną logiczną zmianę
+   - Używaj konwencji conventional commits
 
-Interfejs inspirowany SkeletonUI.
-Dbałość o typografię, czytelność i przestrzeń.
-Przyjazny UX – responsywny, łatwy w obsłudze.
-Responsywność
+2. **Czysty kod**
+   - Stosuj TypeScript wszędzie gdzie to możliwe
+   - Pilnuj typów - unikaj `any`
+   - Używaj ESLint i Prettier przed każdym commitem
 
-Aplikacja ma działać zarówno na desktopie, jak i na mobile.
-Layout czatu powinien być mobilny, z łatwo dostępnym polem wprowadzania tekstu.
-Technologia
-Frontend: SvelteKit + SkeletonUI + TailwindCSS (opcjonalnie) + TypeScript.
-Backend (tymczasowo mockowany): API do obsługi czatu (np. OpenAI API lub lokalna symulacja).
-Zarządzanie stanem: Svelte stores do przechowywania wiadomości, motywu oraz mapy wiedzy.
-Routing:
-/chat – Główny ekran rozmowy
-/knowledge-map – Ekran wizualizacji zdobytej wiedzy
+3. **Testowanie**
+   - Pisz testy podczas implementacji, nie po
+   - Testuj każdą warstwę osobno
+   - Upewnij się, że testy przechodzą przed PR
+
+### 4. Code Review
+1. **Przygotowanie PR**
+   - Opisz zmiany w PR
+   - Dodaj screenshoty UI jeśli aplikowalne
+   - Oznacz sekcje wymagające szczególnej uwagi
+
+2. **Podczas Review**
+   - Odpowiadaj na komentarze
+   - Rób małe fixupy zamiast dużych zmian
+   - Aktualizuj dokumentację jeśli potrzebna
+
+### 5. Dobre Praktyki
+1. **Komponenty UI**
+   - Trzymaj logikę biznesową poza komponentami
+   - Używaj TypeScript dla props
+   - Dokumentuj nieintuicyjne rozwiązania
+
+2. **Store**
+   - Jeden store per feature
+   - Unikaj cross-store dependencies
+   - Używaj akcji do modyfikacji stanu
+
+3. **Serwisy**
+   - Serwisy powinny być testowalne
+   - Unikaj side effects
+   - Dokumentuj publiczne API
+
+4. **API**
+   - Obsługuj błędy na poziomie API
+   - Waliduj dane wejściowe/wyjściowe
+   - Używaj typów dla requestów/responsów
+
+### 6. Debugowanie
+1. Używaj narzędzi Svelte DevTools
+2. Loguj błędy w odpowiednich warstwach
+3. Używaj TypeScript do złapania błędów na etapie kompilacji
+
+### 7. Performance
+1. Unikaj niepotrzebnych re-renderów
+2. Lazy loading dla dużych komponentów
+3. Monitoruj wielkość paczki
+
+### 8. Dokumentacja
+1. Aktualizuj ARCHITECTURE.md przy większych zmianach
+2. Dokumentuj ważne decyzje architektoniczne
+3. Utrzymuj README.md w aktualnym stanie
