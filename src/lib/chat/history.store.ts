@@ -75,6 +75,31 @@ class HistoryStore {
 		this.saveToStorage();
 	}
 
+	deleteConversation(id: string): void {
+		this.store.update((state) => {
+			// Usuń konwersację
+			const conversations = state.conversations.filter((c) => c.id !== id);
+
+			// Jeśli usunięto aktywną konwersację
+			if (state.activeConversationId === id) {
+				// Jeśli są inne konwersacje, ustaw najnowszą jako aktywną
+				const newActiveConversation = conversations[conversations.length - 1];
+				return {
+					...state,
+					conversations,
+					activeConversationId: newActiveConversation?.id || null
+				};
+			}
+
+			return {
+				...state,
+				conversations
+			};
+		});
+
+		this.saveToStorage();
+	}
+
 	// Metody pomocnicze
 	private getConversation(id: string): Conversation | null {
 		const state = get(this.store);
