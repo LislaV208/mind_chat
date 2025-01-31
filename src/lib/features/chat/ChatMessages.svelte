@@ -1,6 +1,5 @@
 <!-- Lista wiadomości w chacie -->
 <script lang="ts">
-    import { Avatar } from '@skeletonlabs/skeleton';
     import { fade } from 'svelte/transition';
     import { marked } from 'marked';
     import type { ChatMessage } from './types';
@@ -36,18 +35,15 @@
 
         {#each messages as message (message.id)}
             <div
-                class="flex items-start gap-2 sm:gap-4"
-                class:justify-end={message.role === 'user'}
+                class="flex flex-col"
+                class:items-end={message.role === 'user'}
                 transition:fade
             >
-                {#if message.role === 'assistant'}
-                    <Avatar initials="AI" />
-                {/if}
-
                 <div
-                    class="rounded-lg p-3 max-w-[85%] sm:max-w-[75%]"
-                    class:variant-soft={message.role === 'user'}
-                    class:variant-ghost={message.role === 'assistant'}
+                    class="max-w-[85%] sm:max-w-[75%]"
+                    class:variant-soft-primary={message.role === 'user'}
+                    class:rounded-lg={message.role === 'user'}
+                    class:p-3={message.role === 'user'}
                 >
                     {#if message.role === 'assistant'}
                         <div class="prose dark:prose-invert max-w-none">
@@ -57,10 +53,6 @@
                         {formatMessage(message.content, message.role)}
                     {/if}
                 </div>
-
-                {#if message.role === 'user'}
-                    <Avatar initials="U" />
-                {/if}
             </div>
         {/each}
 
