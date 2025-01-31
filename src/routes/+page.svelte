@@ -1,28 +1,19 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 
 	import ConversationHistory from '$lib/features/conversation/ConversationHistory.svelte';
 	import { conversationStore } from '$lib/features/conversation/conversation.store';
 	import ChatMessages from '$lib/features/chat/ChatMessages.svelte';
 	import ChatInput from '$lib/features/chat/ChatInput.svelte';
-	import { chatStore } from '$lib/features/chat/chat.store';
 	import Navigation from '$lib/features/navigation/Navigation.svelte';
 	import { navigationStore, toggleNavigation } from '$lib/features/navigation/navigation.store';
 
 	$: activeConversation = $conversationStore.activeConversationId
 		? $conversationStore.conversations.find((c) => c.id === $conversationStore.activeConversationId)
 		: null;
-	$: messages = activeConversation?.messages ?? [];
-	$: status = $chatStore.status;
-	$: error = $chatStore.error;
 	$: isNavigationOpen = $navigationStore.isOpen;
 
 	let elemChat: HTMLElement;
-
-	function scrollChatBottom(behavior?: ScrollBehavior): void {
-		elemChat?.scrollTo({ top: elemChat.scrollHeight, behavior });
-	}
 
 	function startNewConversation(): void {
 		conversationStore.createConversation();
@@ -30,40 +21,7 @@
 
 	function loadConversation(conversationId: string): void {
 		conversationStore.setActiveConversation(conversationId);
-		scrollChatBottom();
 	}
-
-	async function handleSubmit(content: string): Promise<void> {
-		if (!content.trim()) return;
-
-		// Jeśli nie ma aktywnej konwersacji, utwórz nową
-		if (!activeConversation) {
-			conversationStore.createConversation();
-		}
-
-		try {
-			// Wysyłamy wiadomość użytkownika
-			const userMessage = chatStore.createMessage('user', content);
-			conversationStore.addMessage(userMessage);
-
-			// Wysyłamy do API i otrzymujemy odpowiedź asystenta
-			const assistantMessage = await chatStore.sendMessage(content);
-			if (assistantMessage) {
-				conversationStore.addMessage(assistantMessage);
-			}
-
-			// Przewijamy do najnowszej wiadomości
-			scrollChatBottom();
-		} catch (error) {
-			console.error('Error:', error);
-		}
-	}
-
-	onMount(() => {
-		chatStore.setOnUpdate(() => {
-			scrollChatBottom('smooth');
-		});
-	});
 </script>
 
 <div class="h-screen grid grid-cols-1 lg:grid-cols-[500px_1fr] bg-surface-400/20">
@@ -103,8 +61,8 @@
 		<div
 			class="w-full max-w-[95%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-3xl mx-auto h-full flex flex-col"
 		>
-			<ChatMessages {messages} {error} bind:elemChat />
-			<ChatInput {status} onSubmit={handleSubmit} />
+			<ChatMessages bind:elemChat />
+			<ChatInput />
 		</div>
 	</div>
 </div>

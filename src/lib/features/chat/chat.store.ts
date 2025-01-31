@@ -1,14 +1,16 @@
-import { writable } from 'svelte/store';
-import type { ChatState, ChatMessage } from './types';
+import { writable, get } from 'svelte/store';
+import type { ChatState } from './types';
+import { ChatService } from './domain/services/chat.service';
 
 function createChatStore() {
-	const { subscribe, update } = writable<ChatState>({
+	const store = writable<ChatState>({
 		status: 'idle',
 		error: null,
-		currentMessage: ''
+		messages: []
 	});
 
-	let onUpdateCallback: (() => void) | null = null;
+	const { subscribe, update } = store;
+	const chatService = new ChatService();
 
 	return {
 		subscribe,
@@ -21,49 +23,59 @@ function createChatStore() {
 			update((state) => ({ ...state, error }));
 		},
 
-		setOnUpdate: (callback: () => void) => {
-			onUpdateCallback = callback;
-		},
-
-		createMessage: (role: ChatMessage['role'], content: string): ChatMessage => {
-			return {
-				id: crypto.randomUUID(),
-				role,
-				content,
-				timestamp: new Date()
-			};
-		},
-
-		async sendMessage(content: string): Promise<ChatMessage | null> {
+		async sendMessage(content: string): Promise<void> {
 			try {
 				update((state) => ({ ...state, status: 'loading', error: null }));
 
-				const response = await fetch('/api/chat', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({ messages: [{ role: 'user', content }] })
-				});
+				// Tworzymy i dodajemy wiadomość użytkownika
+				const userMessage = chatService.createMessage('user', content);
+				update((state) => ({
+					...state,
+					messages: [...state.messages, userMessage]
+				}));
 
-				if (!response.ok) {
-					throw new Error('Failed to send message');
+				// Tworzymy pustą wiadomość asystenta od razu
+				const assistantMessage = chatService.createMessage('assistant', '');
+				update((state) => ({
+					...state,
+					messages: [...state.messages, assistantMessage]
+				}));
+
+				// Ustawiamy status na streaming
+				update((state) => ({ ...state, status: 'streaming' }));
+
+				// Pobieramy aktualny stan przed streamowaniem
+				const currentState = get(store);
+
+				// Iterujemy po streamie odpowiedzi
+				try {
+					for await (const chunk of chatService.streamResponse(content, currentState.messages)) {
+						// Aktualizujemy treść wiadomości asystenta
+						assistantMessage.content += chunk;
+						update((state) => ({
+							...state,
+							messages: state.messages.map((msg) =>
+								msg.id === assistantMessage.id ? assistantMessage : msg
+							)
+						}));
+					}
+				} catch (error) {
+					// Usuwamy pustą wiadomość asystenta w przypadku błędu
+					update((state) => ({
+						...state,
+						messages: state.messages.filter((msg) => msg.id !== assistantMessage.id)
+					}));
+					throw error;
 				}
 
-				const data = await response.json();
-
 				update((state) => ({ ...state, status: 'idle' }));
-				onUpdateCallback?.();
-
-				return this.createMessage('assistant', data.content);
 			} catch (error) {
-				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+				const errorMessage = error instanceof Error ? error.message : 'Nieznany błąd';
 				update((state) => ({
 					...state,
 					status: 'idle',
 					error: errorMessage
 				}));
-				return null;
 			}
 		}
 	};

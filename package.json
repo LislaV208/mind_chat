@@ -24,6 +24,7 @@
 		"@tailwindcss/typography": "0.5.16",
 		"@types/eslint": "^9.6.0",
 		"@types/node": "22.10.7",
+		"@types/uuid": "^10.0.0",
 		"autoprefixer": "10.4.20",
 		"eslint": "^9.0.0",
 		"eslint-config-prettier": "^9.1.0",
@@ -42,8 +43,11 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@types/dompurify": "^3.0.5",
 		"date-fns": "^4.1.0",
+		"dompurify": "^3.2.4",
 		"marked": "^15.0.6",
-		"openai": "^4.80.1"
+		"openai": "^4.80.1",
+		"uuid": "^11.0.5"
 	}
 }

@@ -1,13 +1,13 @@
 <!-- Input do wpisywania wiadomości -->
 <script lang="ts">
     import { ProgressRadial } from '@skeletonlabs/skeleton';
-    import type { ChatStatus } from './types';
-
-    export let status: ChatStatus = 'idle';
-    export let onSubmit: (content: string) => void;
+    import { chatStore } from './chat.store';
+    import type { ChatState } from './types';
 
     let inputContent = '';
     let textareaElement: HTMLTextAreaElement;
+
+    $: status = $chatStore.status;
 
     $: if (status === 'idle') {
         setTimeout(() => {
@@ -17,7 +17,7 @@
 
     function handleSubmit(): void {
         if (!inputContent.trim()) return;
-        onSubmit(inputContent);
+        chatStore.sendMessage(inputContent);
         inputContent = '';
     }
 
