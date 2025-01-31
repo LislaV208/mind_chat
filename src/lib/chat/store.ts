@@ -1,21 +1,19 @@
-import { get, writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 import type { Message } from './types/message';
 
-type ChatStatus = 'idle' | 'waiting' | 'streaming';
+export type ChatStatus = 'idle' | 'waiting' | 'streaming';
 
-export class ChatState {
-	constructor(
-		readonly messages: Message[],
-		readonly status: ChatStatus,
-		readonly error?: string
-	) {}
+interface ChatState {
+	status: ChatStatus;
+	error: string | null;
 }
 
-export class ChatStore {
-	private readonly MAX_MESSAGES = 10;
+class ChatStore {
 	private onUpdate?: () => void;
-
-	private store = writable<ChatState>(new ChatState([], 'idle'));
+	private store = writable<ChatState>({
+		status: 'idle',
+		error: null
+	});
 
 	subscribe(run: (value: ChatState) => void) {
 		return this.store.subscribe(run);
@@ -25,56 +23,29 @@ export class ChatStore {
 		this.onUpdate = callback;
 	}
 
-	private updateState(
-		messages: Message[],
-		status: ChatStatus,
-		error?: string
-	): void {
-		this.store.update(() => {
-			const newState = new ChatState(messages, status, error);
-			this.onUpdate?.();
-			return newState;
-		});
-	}
-
-	private createMessage(role: 'user' | 'assistant', content: string): Message {
-		const state = get(this.store);
+	createMessage(role: 'user' | 'assistant', content: string): Message {
 		return {
-			id: state.messages.length + 1,
+			id: Date.now(),
 			role,
 			content,
 			timestamp: new Date()
 		};
 	}
 
-	clearMessages(): void {
-		this.updateState([], 'idle');
-	}
-
-	setMessages(messages: Message[]): void {
-		this.updateState(messages, 'idle');
-	}
-
-	async onMessageSent(content: string): Promise<void> {
-		const userMessage = this.createMessage('user', content);
-		const state = get(this.store);
-
-		// Dodaj wiadomość użytkownika i ustaw status na waiting
-		const updatedMessages = [...state.messages, userMessage];
-		this.updateState(updatedMessages.slice(-this.MAX_MESSAGES), 'waiting');
+	async sendMessage(content: string): Promise<Message> {
+		this.store.update((state) => ({
+			...state,
+			status: 'waiting'
+		}));
 
 		try {
-			// Pobierz ostatnie wiadomości do wysłania
-			const recentMessages = updatedMessages.slice(-this.MAX_MESSAGES);
-
-			// Wywołaj endpoint API z ostatnimi wiadomościami
 			const response = await fetch('/api/chat', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					messages: recentMessages.map(({ role, content }) => ({ role, content }))
+					messages: [{ role: 'user', content }]
 				})
 			});
 
@@ -82,51 +53,60 @@ export class ChatStore {
 				throw new Error('Błąd podczas komunikacji z serwerem');
 			}
 
-			if (!response.body) {
-				throw new Error('Brak odpowiedzi z serwera');
-			}
+			// Sprawdzamy czy response to stream czy zwykła odpowiedź
+			const contentType = response.headers.get('content-type');
+			let assistantContent = '';
 
-			// Czytaj strumień odpowiedzi
-			const reader = response.body.getReader();
-			const decoder = new TextDecoder();
-			let responseContent = '';
-			let isFirstChunk = true;
+			if (contentType?.includes('stream')) {
+				// Obsługa streamu
+				if (!response.body) {
+					throw new Error('Brak odpowiedzi z serwera');
+				}
 
-			while (true) {
-				const { done, value } = await reader.read();
-				if (done) break;
+				const reader = response.body.getReader();
+				const decoder = new TextDecoder();
 
-				const text = decoder.decode(value);
-				responseContent += text;
-				
-				// Przy pierwszym fragmencie tworzymy nową wiadomość asystenta
-				if (isFirstChunk) {
-					const assistantMessage = this.createMessage('assistant', responseContent);
-					const currentState = get(this.store);
-					const newMessages = [...currentState.messages, assistantMessage];
-					this.updateState(newMessages.slice(-this.MAX_MESSAGES), 'streaming');
-					isFirstChunk = false;
-				} else {
-					// Aktualizujemy treść ostatniej wiadomości
-					const currentState = get(this.store);
-					const messages = [...currentState.messages];
-					const lastMessage = messages[messages.length - 1];
-					if (lastMessage && lastMessage.role === 'assistant') {
-						lastMessage.content = responseContent;
-						this.updateState(messages, 'streaming');
-					}
+				this.store.update((state) => ({ ...state, status: 'streaming' }));
+
+				while (true) {
+					const { done, value } = await reader.read();
+					if (done) break;
+
+					const chunk = decoder.decode(value);
+					assistantContent += chunk;
+				}
+			} else {
+				// Zwykła odpowiedź JSON
+				const data = await response.text();
+				try {
+					const jsonData = JSON.parse(data);
+					assistantContent = jsonData.content;
+				} catch (e) {
+					console.error('Exception: ', e);
+					console.error('Błąd parsowania JSON:', data);
+					throw new Error('Nieprawidłowy format odpowiedzi z serwera');
 				}
 			}
 
-			// Ustaw status na idle po zakończeniu
-			const finalState = get(this.store);
-			this.updateState(finalState.messages, 'idle');
+			const assistantMessage = this.createMessage('assistant', assistantContent);
+
+			this.store.update((state) => ({
+				...state,
+				status: 'idle',
+				error: null
+			}));
+
+			return assistantMessage;
 		} catch (error) {
-			console.error('Błąd:', error);
-			this.updateState(state.messages, 'idle', error instanceof Error ? error.message : 'Nieznany błąd');
+			this.store.update((state) => ({
+				...state,
+				status: 'idle',
+				error: error instanceof Error ? error.message : 'Unknown error'
+			}));
+
+			throw error;
 		}
 	}
 }
 
-// Eksportujemy instancję klasy ChatStore
 export const chatStore = new ChatStore();

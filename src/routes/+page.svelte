@@ -6,20 +6,21 @@
 	import { navigationStore, toggleNavigation } from '$lib/navigation/store';
 	import { chatStore } from '$lib/chat/store';
 	import { historyStore } from '$lib/chat/history.store';
+	import ConversationHistory from '$lib/chat/components/ConversationHistory.svelte';
 
-	$: messages = $chatStore.messages;
+	$: activeConversation = $historyStore.activeConversationId
+		? $historyStore.conversations.find((c) => c.id === $historyStore.activeConversationId)
+		: null;
+	$: messages = activeConversation?.messages ?? [];
 	$: status = $chatStore.status;
 	$: error = $chatStore.error;
 	$: isNavigationOpen = $navigationStore.isOpen;
-	$: history = $historyStore;
-	$: conversations = history.conversations;
 
 	let inputContent = '';
 	let elemChat: HTMLElement;
 	let textareaElement: HTMLTextAreaElement;
-	let currentConversationId: string | null = null;
 
-	$: if ($chatStore.status === 'idle') {
+	$: if (status === 'idle') {
 		setTimeout(() => {
 			textareaElement?.focus();
 		}, 0);
@@ -30,36 +31,41 @@
 	}
 
 	function startNewConversation(): void {
-		currentConversationId = null;
-		chatStore.clearMessages();
+		historyStore.createConversation();
 	}
 
 	function loadConversation(conversationId: string): void {
-		const conversation = historyStore.getConversation(conversationId);
-		if (conversation) {
-			currentConversationId = conversationId;
-			chatStore.setMessages(conversation.messages);
-			scrollChatBottom();
-		}
+		historyStore.setActiveConversation(conversationId);
+		scrollChatBottom();
 	}
 
-	function addMessage(): void {
-		const message = {
-			id: messages.length + 1,
-			role: 'user' as const,
-			content: inputContent,
-			timestamp: new Date()
-		};
+	async function addMessage(): Promise<void> {
+		if (!inputContent.trim()) return;
 
-		if (!currentConversationId) {
-			const conversation = historyStore.createConversation(message);
-			currentConversationId = conversation.id;
-		} else {
-			historyStore.updateConversation(currentConversationId, message);
+		// Jeśli nie ma aktywnej konwersacji, utwórz nową
+		if (!activeConversation) {
+			historyStore.createConversation();
 		}
 
-		chatStore.onMessageSent(inputContent);
+		const content = inputContent;
 		inputContent = '';
+
+		try {
+			// Wysyłamy wiadomość użytkownika
+			const userMessage = chatStore.createMessage('user', content);
+			historyStore.addMessage(userMessage);
+
+			// Wysyłamy do API i otrzymujemy odpowiedź asystenta
+			const assistantMessage = await chatStore.sendMessage(content);
+			if (assistantMessage) {
+				historyStore.addMessage(assistantMessage);
+			}
+
+			// Przewijamy do najnowszej wiadomości
+			scrollChatBottom();
+		} catch (error) {
+			console.error('Error:', error);
+		}
 	}
 
 	function onPromptKeydown(event: KeyboardEvent): void {
@@ -76,25 +82,9 @@
 		return content;
 	}
 
-	function formatDate(date: Date): string {
-		return new Intl.DateTimeFormat('pl-PL', {
-			day: '2-digit',
-			month: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit'
-		}).format(date);
-	}
-
 	onMount(() => {
 		chatStore.setOnUpdate(() => {
 			scrollChatBottom('smooth');
-			// Aktualizuj historię gdy otrzymamy odpowiedź od asystenta
-			if (currentConversationId && messages.length > 0) {
-				const lastMessage = messages[messages.length - 1];
-				if (lastMessage.role === 'assistant') {
-					historyStore.updateConversation(currentConversationId, lastMessage);
-				}
-			}
 		});
 	});
 </script>
@@ -126,55 +116,15 @@
 		class="fixed inset-0 lg:relative lg:inset-auto transition-transform duration-300 ease-in-out transform
 		{isNavigationOpen ? 'translate-x-0' : '-translate-x-full'} 
 		lg:translate-x-0 bg-surface-100-800-token lg:bg-transparent
-		min-w-[250px] w-[80vw] max-w-[320px] md:max-w-[400px] lg:w-auto
+		min-w[250px] w-[80vw] max-w-[320px] md:max-w-[400px] lg:w-auto
 		z-40 lg:z-auto
 		border-r border-surface-400/40"
 	>
-		<div class="p-4 h-full overflow-y-auto">
-			<div class="flex justify-between items-center mb-4">
-				<h2 class="text-xl font-bold">Historia konwersacji</h2>
-				<button
-					class="p-2 rounded-lg hover:bg-surface-500/20"
-					on:click={startNewConversation}
-					title="Nowa konwersacja"
-				>
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke-width="1.5"
-						stroke="currentColor"
-						class="w-5 h-5"
-					>
-						<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-					</svg>
-				</button>
-			</div>
-
-			{#if conversations.length === 0}
-				<div class="flex items-center justify-center text-surface-400 h-32">
-					<span>Brak historii konwersacji</span>
-				</div>
-			{:else}
-				<div class="space-y-2">
-					{#each conversations as conversation}
-						<button
-							class="w-full p-3 rounded-lg hover:bg-surface-500/20 text-left transition-colors
-								{currentConversationId === conversation.id ? 'bg-surface-500/20' : ''}"
-							on:click={() => loadConversation(conversation.id)}
-						>
-							<div class="font-medium line-clamp-1">{conversation.title}</div>
-							<div class="text-sm text-surface-400 line-clamp-2 mt-1">
-								{conversation.lastMessage}
-							</div>
-							<div class="text-xs text-surface-400 mt-1">
-								{formatDate(conversation.updatedAt)}
-							</div>
-						</button>
-					{/each}
-				</div>
-			{/if}
-		</div>
+		<ConversationHistory
+			currentConversationId={$historyStore.activeConversationId}
+			onConversationSelect={loadConversation}
+			onNewConversation={startNewConversation}
+		/>
 	</div>
 
 	<!-- Overlay for mobile navigation -->
@@ -212,7 +162,8 @@
 							</p>
 						</div>
 					{/if}
-					{#each messages as message, i}
+
+					{#each messages as message}
 						{#if message.role === 'user'}
 							<!-- User message -->
 							<div class="w-fit ml-auto">
@@ -221,6 +172,7 @@
 								</div>
 							</div>
 						{:else}
+							<!-- Assistant message -->
 							<div class="w-full max-w-3xl mx-auto">
 								<div class="p-4 space-y-2">
 									<div class="prose dark:prose-invert max-w-none">
@@ -231,13 +183,22 @@
 						{/if}
 					{/each}
 
-					{#if status === 'waiting'}
+					{#if status === 'waiting' || status === 'streaming'}
 						<div class="w-full flex items-center justify-center p-4">
 							<ProgressRadial width="w-8" />
 						</div>
 					{/if}
+
+					{#if error}
+						<div class="w-full p-4">
+							<div class="card p-4 variant-filled-error">
+								{error}
+							</div>
+						</div>
+					{/if}
 				</section>
 			</div>
+
 			<!-- Input -->
 			<div class="p-4 border-t border-surface-400/40">
 				<div class="max-w-3xl mx-auto">
