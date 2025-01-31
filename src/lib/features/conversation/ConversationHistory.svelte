@@ -1,29 +1,30 @@
+<!-- Komponent wyświetlający historię konwersacji -->
 <script lang="ts">
-	import { fade } from 'svelte/transition';
-	import { historyStore } from '../history.store';
+	import { conversationStore } from './conversation.store'
+	import type { Conversation } from './types'
 
-	export let currentConversationId: string | null = null;
-	export let onConversationSelect: (id: string) => void;
-	export let onNewConversation: () => void;
+	export let currentConversationId: string | null = null
+	export let onConversationSelect: (id: string) => void
+	export let onNewConversation: () => void
 
-	$: history = $historyStore;
-	$: conversations = history.conversations;
-
-	function handleConversationSelect(id: string): void {
-		onConversationSelect(id);
-	}
-
-	function handleNewConversation(): void {
-		onNewConversation();
-	}
+	$: conversations = $conversationStore.conversations
 
 	function formatDate(date: Date): string {
-		return new Intl.DateTimeFormat('pl-PL', {
-			day: '2-digit',
-			month: '2-digit',
+		return new Date(date).toLocaleString('pl-PL', {
+			year: 'numeric',
+			month: 'numeric',
+			day: 'numeric',
 			hour: '2-digit',
 			minute: '2-digit'
-		}).format(date);
+		})
+	}
+
+	function handleConversationSelect(id: string) {
+		onConversationSelect(id)
+	}
+
+	function handleNewConversation() {
+		onNewConversation()
 	}
 </script>
 
@@ -67,7 +68,7 @@
 							<div class="font-medium line-clamp-1">{conversation.title}</div>
 							<button
 								class="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-error-500/20 hover:text-error-500"
-								on:click|stopPropagation={() => historyStore.deleteConversation(conversation.id)}
+								on:click|stopPropagation={() => conversationStore.deleteConversation(conversation.id)}
 								title="Usuń konwersację"
 							>
 								<svg
