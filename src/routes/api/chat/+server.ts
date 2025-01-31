@@ -15,8 +15,19 @@ const SYSTEM_MESSAGE = `Jesteś asystentem do pomagania w nauce, jednak starasz 
 //     Staraj się wyjaśniać koncepcje w sposób zrozumiały.
 // 	`;
 
+// Ustaw na true aby używać mocka zamiast prawdziwego API
+const USE_MOCK_RESPONSE = true;
+
 export const POST: RequestHandler = async ({ request }) => {
 	try {
+		// Jeśli używamy mocka, zwróć przykładową odpowiedź
+		if (USE_MOCK_RESPONSE) {
+			await new Promise((resolve) => setTimeout(resolve, 1000)); // symulacja opóźnienia
+			return json({
+				content: 'To jest przykładowa odpowiedź bota. Używamy teraz zamockowanego API.'
+			});
+		}
+
 		const { messages } = await request.json();
 
 		const stream = await openai.chat.completions.create({
