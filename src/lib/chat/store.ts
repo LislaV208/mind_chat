@@ -47,17 +47,25 @@ export class ChatStore {
 		};
 	}
 
+	clearMessages(): void {
+		this.updateState([], 'idle');
+	}
+
+	setMessages(messages: Message[]): void {
+		this.updateState(messages, 'idle');
+	}
+
 	async onMessageSent(content: string): Promise<void> {
 		const userMessage = this.createMessage('user', content);
 		const state = get(this.store);
 
 		// Dodaj wiadomość użytkownika i ustaw status na waiting
-		this.updateState([...state.messages, userMessage], 'waiting');
+		const updatedMessages = [...state.messages, userMessage];
+		this.updateState(updatedMessages.slice(-this.MAX_MESSAGES), 'waiting');
 
 		try {
 			// Pobierz ostatnie wiadomości do wysłania
-			const currentState = get(this.store);
-			const recentMessages = currentState.messages.slice(-this.MAX_MESSAGES);
+			const recentMessages = updatedMessages.slice(-this.MAX_MESSAGES);
 
 			// Wywołaj endpoint API z ostatnimi wiadomościami
 			const response = await fetch('/api/chat', {
@@ -95,7 +103,8 @@ export class ChatStore {
 				if (isFirstChunk) {
 					const assistantMessage = this.createMessage('assistant', responseContent);
 					const currentState = get(this.store);
-					this.updateState([...currentState.messages, assistantMessage], 'streaming');
+					const newMessages = [...currentState.messages, assistantMessage];
+					this.updateState(newMessages.slice(-this.MAX_MESSAGES), 'streaming');
 					isFirstChunk = false;
 				} else {
 					// Aktualizujemy treść ostatniej wiadomości
@@ -109,13 +118,12 @@ export class ChatStore {
 				}
 			}
 
-			// Zakończ ładowanie
+			// Ustaw status na idle po zakończeniu
 			const finalState = get(this.store);
 			this.updateState(finalState.messages, 'idle');
 		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : 'Wystąpił nieznany błąd';
-			const errorState = get(this.store);
-			this.updateState(errorState.messages, 'idle', errorMessage);
+			console.error('Błąd:', error);
+			this.updateState(state.messages, 'idle', error instanceof Error ? error.message : 'Nieznany błąd');
 		}
 	}
 }

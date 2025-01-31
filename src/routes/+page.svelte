@@ -4,17 +4,20 @@
 	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { navigationStore, toggleNavigation } from '$lib/navigation/store';
-
 	import { chatStore } from '$lib/chat/store';
+	import { historyStore } from '$lib/chat/history.store';
 
 	$: messages = $chatStore.messages;
 	$: status = $chatStore.status;
 	$: error = $chatStore.error;
 	$: isNavigationOpen = $navigationStore.isOpen;
+	$: history = $historyStore;
+	$: conversations = history.conversations;
 
 	let inputContent = '';
 	let elemChat: HTMLElement;
 	let textareaElement: HTMLTextAreaElement;
+	let currentConversationId: string | null = null;
 
 	$: if ($chatStore.status === 'idle') {
 		setTimeout(() => {
@@ -26,7 +29,35 @@
 		elemChat?.scrollTo({ top: elemChat.scrollHeight, behavior });
 	}
 
+	function startNewConversation(): void {
+		currentConversationId = null;
+		chatStore.clearMessages();
+	}
+
+	function loadConversation(conversationId: string): void {
+		const conversation = historyStore.getConversation(conversationId);
+		if (conversation) {
+			currentConversationId = conversationId;
+			chatStore.setMessages(conversation.messages);
+			scrollChatBottom();
+		}
+	}
+
 	function addMessage(): void {
+		const message = {
+			id: messages.length + 1,
+			role: 'user' as const,
+			content: inputContent,
+			timestamp: new Date()
+		};
+
+		if (!currentConversationId) {
+			const conversation = historyStore.createConversation(message);
+			currentConversationId = conversation.id;
+		} else {
+			historyStore.updateConversation(currentConversationId, message);
+		}
+
 		chatStore.onMessageSent(inputContent);
 		inputContent = '';
 	}
@@ -45,9 +76,25 @@
 		return content;
 	}
 
+	function formatDate(date: Date): string {
+		return new Intl.DateTimeFormat('pl-PL', {
+			day: '2-digit',
+			month: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit'
+		}).format(date);
+	}
+
 	onMount(() => {
 		chatStore.setOnUpdate(() => {
 			scrollChatBottom('smooth');
+			// Aktualizuj historię gdy otrzymamy odpowiedź od asystenta
+			if (currentConversationId && messages.length > 0) {
+				const lastMessage = messages[messages.length - 1];
+				if (lastMessage.role === 'assistant') {
+					historyStore.updateConversation(currentConversationId, lastMessage);
+				}
+			}
 		});
 	});
 </script>
@@ -83,8 +130,50 @@
 		z-40 lg:z-auto
 		border-r border-surface-400/40"
 	>
-		<div class="flex items-center justify-center text-surface-400 h-full">
-			<span>Tu niebawem pojawią się rzeczy!</span>
+		<div class="p-4 h-full overflow-y-auto">
+			<div class="flex justify-between items-center mb-4">
+				<h2 class="text-xl font-bold">Historia konwersacji</h2>
+				<button
+					class="p-2 rounded-lg hover:bg-surface-500/20"
+					on:click={startNewConversation}
+					title="Nowa konwersacja"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+						class="w-5 h-5"
+					>
+						<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+					</svg>
+				</button>
+			</div>
+
+			{#if conversations.length === 0}
+				<div class="flex items-center justify-center text-surface-400 h-32">
+					<span>Brak historii konwersacji</span>
+				</div>
+			{:else}
+				<div class="space-y-2">
+					{#each conversations as conversation}
+						<button
+							class="w-full p-3 rounded-lg hover:bg-surface-500/20 text-left transition-colors
+								{currentConversationId === conversation.id ? 'bg-surface-500/20' : ''}"
+							on:click={() => loadConversation(conversation.id)}
+						>
+							<div class="font-medium line-clamp-1">{conversation.title}</div>
+							<div class="text-sm text-surface-400 line-clamp-2 mt-1">
+								{conversation.lastMessage}
+							</div>
+							<div class="text-xs text-surface-400 mt-1">
+								{formatDate(conversation.updatedAt)}
+							</div>
+						</button>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	</div>
 
