@@ -113,11 +113,11 @@
 
 	<!-- Navigation -->
 	<div
-		class="fixed inset-0 lg:relative lg:inset-auto transition-transform duration-300 ease-in-out transform
+		class="fixed inset-0 lg:static transition-transform duration-300 ease-in-out transform
 		{isNavigationOpen ? 'translate-x-0' : '-translate-x-full'} 
 		lg:translate-x-0 bg-surface-100-800-token lg:bg-transparent
-		min-w[250px] w-[80vw] max-w-[320px] md:max-w-[400px] lg:w-auto
-		z-40 lg:z-auto
+		min-w[250px] w-[80vw] max-w-[320px] md:max-w-[400px] lg:w-auto h-full
+		z-40 lg:z-auto flex flex-col min-h-0
 		border-r border-surface-400/40"
 	>
 		<ConversationHistory
