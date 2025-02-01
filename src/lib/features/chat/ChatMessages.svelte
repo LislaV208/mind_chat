@@ -8,14 +8,27 @@
 	import { afterUpdate } from 'svelte';
 
 	let elemChat: HTMLDivElement;
+	let shouldAutoScroll = true;
 
 	$: messages = $chatStore.messages;
 	$: error = $chatStore.error;
 	$: status = $chatStore.status;
 
+	function isAtBottom(): boolean {
+		return elemChat.scrollHeight - elemChat.scrollTop === elemChat.clientHeight;
+	}
+
+	function handleScroll(): void {
+		if (status === 'streaming') {
+			shouldAutoScroll = isAtBottom();
+		}
+	}
+
 	afterUpdate(() => {
 		if (elemChat && messages.length > 0) {
-			elemChat.scrollTop = elemChat.scrollHeight;
+			if (status !== 'streaming' || shouldAutoScroll) {
+				elemChat.scrollTop = elemChat.scrollHeight;
+			}
 		}
 	});
 
@@ -28,7 +41,7 @@
 	}
 </script>
 
-<div class="flex-1 overflow-y-auto px-2 sm:px-4 md:px-6" bind:this={elemChat}>
+<div class="flex-1 overflow-y-auto px-2 sm:px-4 md:px-6" bind:this={elemChat} on:scroll={handleScroll}>
 	<section class="w-full py-4 space-y-4" class:h-full={messages.length === 0}>
 		{#if messages.length === 0}
 			<div
