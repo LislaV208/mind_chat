@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
 	import ChatContainer from '$lib/features/chat/ChatContainer.svelte';
-	import ConversationHistory from '$lib/features/conversation/ConversationHistory.svelte';
+	import ConversationHistory from '$lib/features/chat/ChatHistory.svelte';
 	import { conversationStore } from '$lib/features/conversation/conversation.store';
 	import ChatMessages from '$lib/features/chat/ChatMessages.svelte';
 	import ChatInput from '$lib/features/chat/ChatInput.svelte';
 	import Navigation from '$lib/features/navigation/Navigation.svelte';
 	import { navigationStore, toggleNavigation } from '$lib/features/navigation/navigation.store';
+	import ChatHistory from '$lib/features/chat/ChatHistory.svelte';
 
 	$: activeConversation = $conversationStore.activeConversationId
 		? $conversationStore.conversations.find((c) => c.id === $conversationStore.activeConversationId)
@@ -35,11 +36,7 @@
 		z-40 lg:z-auto flex flex-col min-h-0
 		border-r border-surface-400/40"
 	>
-		<ConversationHistory
-			currentConversationId={$conversationStore.activeConversationId}
-			onConversationSelect={loadConversation}
-			onNewConversation={startNewConversation}
-		/>
+		<ChatHistory />
 	</div>
 
 	<!-- Overlay for mobile navigation -->

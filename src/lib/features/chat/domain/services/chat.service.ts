@@ -1,5 +1,5 @@
-import type { ChatMessage, ApiMessage } from '../models/message.model';
 import { ChatApi } from '../../api/chat.api';
+import type { ApiMessage, Chat, ChatMessage, CreateMessageDTO } from '../models/chat.model';
 
 export class ChatService {
 	private readonly chatApi: ChatApi;
@@ -49,5 +49,25 @@ export class ChatService {
 		for await (const chunk of this.chatApi.streamChat(apiMessages)) {
 			yield chunk;
 		}
+	}
+
+	async createChat(title: string): Promise<Chat> {
+		const chat = await this.chatApi.createChat(title);
+
+		return chat;
+	}
+
+	async deleteChat(id: string): Promise<void> {
+		await this.chatApi.deleteChat(id);
+	}
+
+	async addMessageToChat(id: string, message: CreateMessageDTO): Promise<ChatMessage> {
+		const chatMessage = await this.chatApi.addMessageToChat(id, message);
+		return chatMessage;
+	}
+
+	async getChat(id: string): Promise<Chat> {
+		const chat = await this.chatApi.getChat(id);
+		return chat;
 	}
 }

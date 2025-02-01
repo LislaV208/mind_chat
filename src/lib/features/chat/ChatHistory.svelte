@@ -1,13 +1,9 @@
 <!-- Komponent wyświetlający historię konwersacji -->
 <script lang="ts">
-	import { conversationStore } from './conversation.store'
-	import type { Conversation } from './types'
+	import { chatStore } from './chat.store';
 
-	export let currentConversationId: string | null = null
-	export let onConversationSelect: (id: string) => void
-	export let onNewConversation: () => void
-
-	$: conversations = $conversationStore.conversations
+	$: chats = $chatStore.chats;
+	$: currentChat = $chatStore.currentChat;
 
 	function formatDate(date: Date): string {
 		return new Date(date).toLocaleString('pl-PL', {
@@ -16,15 +12,15 @@
 			day: 'numeric',
 			hour: '2-digit',
 			minute: '2-digit'
-		})
+		});
 	}
 
 	function handleConversationSelect(id: string) {
-		onConversationSelect(id)
+		chatStore.onChatSelected(id);
 	}
 
 	function handleNewConversation() {
-		onNewConversation()
+		chatStore.createChat('Nowa konwersacja');
 	}
 </script>
 
@@ -52,23 +48,23 @@
 	</div>
 
 	<div class="flex-1 overflow-y-auto px-4">
-		{#if conversations.length === 0}
+		{#if chats.length === 0}
 			<div class="flex items-center justify-center text-surface-400 h-32">
 				<span>Brak historii konwersacji</span>
 			</div>
 		{:else}
 			<div class="space-y-2 pb-4">
-				{#each conversations as conversation}
+				{#each chats as chat}
 					<button
-						class="w-full p-3 rounded-lg hover:bg-surface-500/20 text-left transition-colors group relative
-							{currentConversationId === conversation.id ? 'bg-surface-500/20' : ''}"
-						on:click={() => handleConversationSelect(conversation.id)}
+						class="w-full p-3 rounded-lg text-left transition-colors group relative
+							{currentChat?.id === chat.id ? 'bg-surface-400/20' : ''}"
+						on:click={() => handleConversationSelect(chat.id)}
 					>
 						<div class="flex justify-between items-center">
-							<div class="font-medium line-clamp-1">{conversation.title}</div>
+							<div class="font-medium line-clamp-1">{chat.title}</div>
 							<button
 								class="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-error-500/20 hover:text-error-500"
-								on:click|stopPropagation={() => conversationStore.deleteConversation(conversation.id)}
+								on:click|stopPropagation={() => chatStore.deleteChat(chat.id)}
 								title="Usuń konwersację"
 							>
 								<svg
@@ -87,13 +83,13 @@
 								</svg>
 							</button>
 						</div>
-						{#if conversation.lastMessage}
+						<!-- {#if conversation.lastMessage}
 							<div class="text-sm text-surface-400 line-clamp-2 mt-1">
 								{conversation.lastMessage}
 							</div>
-						{/if}
+						{/if} -->
 						<div class="text-xs text-surface-400 mt-1">
-							{formatDate(conversation.updatedAt)}
+							{formatDate(chat.updatedAt)}
 						</div>
 					</button>
 				{/each}
