@@ -1,6 +1,5 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-// import type { ApiMessage } from '$lib/features/chat/domain/models/message.model';
 import OpenAI from 'openai';
 import { OPENAI_API_KEY } from '$env/static/private';
 
@@ -8,13 +7,7 @@ const openai = new OpenAI({
 	apiKey: OPENAI_API_KEY
 });
 
-const SYSTEM_MESSAGE = `Jesteś asystentem do pomagania w nauce, jednak starasz się to robić w sposób zabawny i wulgarny, z przekleństwami.
-	`;
-
-// const SYSTEM_MESSAGE = `Jesteś pomocnym asystentem, który pomaga w nauce.
-//     Twoje odpowiedzi powinny być rzeczowe i na temat.
-//     Staraj się wyjaśniać koncepcje w sposób zrozumiały.
-// 	`;
+const SYSTEM_MESSAGE = `Jesteś asystentem do pomagania w nauce, jednak starasz się to robić w sposób zabawny i wulgarny, z przekleństwami.`;
 
 // Ustaw na true aby używać mocka zamiast prawdziwego API
 const USE_MOCK_RESPONSE = false;
@@ -23,8 +16,6 @@ export const POST: RequestHandler = async ({ request }) => {
 	try {
 		// Jeśli używamy mocka, zwróć przykładową odpowiedź
 		if (USE_MOCK_RESPONSE) {
-			// const { messages } = (await request.json()) as { messages: ApiMessage[] };
-
 			// Tworzymy nowy ReadableStream
 			const stream = new ReadableStream({
 				async start(controller) {
@@ -99,7 +90,7 @@ export const POST: RequestHandler = async ({ request }) => {
 			}
 		});
 	} catch (error) {
-		console.error('OpenAI API error:', error);
-		return json({ error: 'Wystąpił błąd podczas generowania odpowiedzi.' }, { status: 500 });
+		console.error('Error in chat endpoint:', error);
+		return json({ error: 'Internal server error' }, { status: 500 });
 	}
 };

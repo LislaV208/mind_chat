@@ -8,7 +8,7 @@ export class ChatApiError extends Error {
 }
 
 export class ChatApi {
-    private readonly API_URL = '/api/chat';
+    private readonly API_URL = '/api/ai/chat';
 
     /**
      * Wysyła wiadomości do API i zwraca stream z odpowiedzią
