@@ -5,17 +5,19 @@
 	import DOMPurify from 'dompurify';
 	import { chatStore } from './chat.store';
 	import type { ChatMessage } from './domain/models/message.model';
+	import { afterUpdate } from 'svelte';
 
-	export let elemChat: HTMLElement;
+	let elemChat: HTMLDivElement;
 
 	$: messages = $chatStore.messages;
 	$: error = $chatStore.error;
 	$: status = $chatStore.status;
 
-	// Auto-scroll podczas streamowania
-	$: if (status === 'streaming' && elemChat) {
-		elemChat.scrollTop = elemChat.scrollHeight;
-	}
+	afterUpdate(() => {
+		if (elemChat && messages.length > 0) {
+			elemChat.scrollTop = elemChat.scrollHeight;
+		}
+	});
 
 	function formatMessage(content: string, role: ChatMessage['role']): string {
 		if (role === 'assistant') {

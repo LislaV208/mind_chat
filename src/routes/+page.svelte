@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition';
-
+	import ChatContainer from '$lib/features/chat/ChatContainer.svelte';
 	import ConversationHistory from '$lib/features/conversation/ConversationHistory.svelte';
 	import { conversationStore } from '$lib/features/conversation/conversation.store';
 	import ChatMessages from '$lib/features/chat/ChatMessages.svelte';
@@ -12,8 +12,6 @@
 		? $conversationStore.conversations.find((c) => c.id === $conversationStore.activeConversationId)
 		: null;
 	$: isNavigationOpen = $navigationStore.isOpen;
-
-	let elemChat: HTMLElement;
 
 	function startNewConversation(): void {
 		conversationStore.createConversation();
@@ -56,13 +54,5 @@
 		/>
 	{/if}
 
-	<!-- Chat -->
-	<div class="h-full flex flex-col flex-1 min-h-0 relative">
-		<div
-			class="w-full max-w-[95%] sm:max-w-[85%] md:max-w-[75%] lg:max-w-3xl mx-auto h-full flex flex-col"
-		>
-			<ChatMessages bind:elemChat />
-			<ChatInput />
-		</div>
-	</div>
+	<ChatContainer></ChatContainer>
 </div>

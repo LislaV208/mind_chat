@@ -49,7 +49,7 @@ function createChatStore() {
 
 				// Iterujemy po streamie odpowiedzi
 				try {
-					for await (const chunk of chatService.streamResponse(content, currentState.messages)) {
+					for await (const chunk of chatService.streamResponse(currentState.messages)) {
 						// Aktualizujemy treść wiadomości asystenta
 						assistantMessage.content += chunk;
 						update((state) => ({

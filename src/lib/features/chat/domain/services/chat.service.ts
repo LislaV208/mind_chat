@@ -41,19 +41,12 @@ export class ChatService {
 
 	/**
 	 * Streamuje odpowiedź z API
-	 * @param content Treść wiadomości
 	 * @param messages Historia konwersacji
 	 */
-	async *streamResponse(content: string, messages: ChatMessage[] = []): AsyncGenerator<string> {
-		if (!this.validateMessage(content)) {
-			throw new Error('Wiadomość nie może być pusta');
-		}
+	async *streamResponse(messages: ChatMessage[] = []): AsyncGenerator<string> {
+		const apiMessages = this.prepareMessages(messages);
 
-		const userMessage = this.createMessage('user', content);
-		const allMessages = [...messages, userMessage];
-		const preparedMessages = this.prepareMessages(allMessages);
-
-		for await (const chunk of this.chatApi.streamChat(preparedMessages)) {
+		for await (const chunk of this.chatApi.streamChat(apiMessages)) {
 			yield chunk;
 		}
 	}
