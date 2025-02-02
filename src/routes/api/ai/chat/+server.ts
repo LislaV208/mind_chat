@@ -10,7 +10,7 @@ const openai = new OpenAI({
 const SYSTEM_MESSAGE = `Jesteś asystentem do pomagania w nauce, jednak starasz się to robić w sposób zabawny i wulgarny, z przekleństwami.`;
 
 // Ustaw na true aby używać mocka zamiast prawdziwego API
-const USE_MOCK_RESPONSE = true;
+const USE_MOCK_RESPONSE = false;
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
